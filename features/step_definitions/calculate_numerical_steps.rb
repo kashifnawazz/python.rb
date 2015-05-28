@@ -43,5 +43,5 @@ end
 
 Then(/^the output expect be "([^"]*)"$/) do |expected|
   @repl.read_eval_print(@input)
-  expect(@out.messages.drop(1)).to include(expected)
+  expect(@out.messages.drop(1)).to include(expected + "\n")
 end

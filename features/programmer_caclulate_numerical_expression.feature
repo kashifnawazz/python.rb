@@ -13,6 +13,7 @@ Feature: programmer calculate numerical expression
       |          1 |         1 |
       |          0 |         0 |
       |         -1 |        -1 |
+      |         +1 |         1 |
 
     Scenarios: single operator
       | expression | evaluated |

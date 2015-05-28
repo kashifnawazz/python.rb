@@ -7,7 +7,7 @@ module Python
     end
 
     def start
-      print_console
+      prompt
     end
 
     def read_eval_print(code)
@@ -27,7 +27,7 @@ module Python
       @output.puts obj.entity.to_s
     end
 
-    def print_console
+    def prompt
       @output.print "python.rb> "
     end
   end
