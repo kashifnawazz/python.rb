@@ -1,7 +1,9 @@
-require 'python/parser'
+require 'python/parser/expression'
 
 module Python
   class REPL
+    ParsingError = Class.new(RuntimeError)
+
     def initialize(output)
       @output = output
     end
@@ -15,8 +17,13 @@ module Python
     end
 
     def read(code)
-      parser = Parser::ExpressionParser.new
-      parser.parse(code)
+      parser = Parser::ExpressionParser.expression
+      case result = parser.parse(code)
+      when Parser::Succeeded
+        result.parsed
+      when Parser::Failed
+        raise ParsingError.new
+      end
     end
 
     def eval(exp)
