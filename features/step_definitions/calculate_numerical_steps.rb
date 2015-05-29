@@ -32,9 +32,11 @@ end
 #-----
 
 Given(/^I started repl but didn't input anything$/) do
-  @out = Out.new
-  @repl = Python::REPL.new(@out)
-  @repl.start
+  unless @out
+    @out = Out.new
+    @repl = Python::REPL.new(@out)
+    @repl.start
+  end
 end
 
 When(/^I input "([^"]*)"$/) do |input|

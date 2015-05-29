@@ -22,7 +22,7 @@ module Python
 
     def get_special_attr(name)
       if !self[:class]
-        raise "#{self} doesn't have class"
+        raise "failed to get special attr #{name} from #{self}: #{self} doesn't have class"
       elsif cls = self[:class].cls_traverse{|cls| cls[name] && cls[name].datadescriptor?}
         cls[name].get_get_method.call(cls[name], self, self[:class])
       elsif cls = self[:class].cls_traverse{|cls| cls[name]}
@@ -32,7 +32,7 @@ module Python
           cls[name]
         end
       else
-        raise "failed to get special attr #{name} from #{self}"
+        raise "failed to get special attr #{name} from #{self}: #{name} is not found"
       end
     end
 
