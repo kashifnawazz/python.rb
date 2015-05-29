@@ -1,9 +1,13 @@
-require 'python/parser'
+require 'python/parser/statement'
+require 'python/environment'
 
 module Python
   class REPL
+    ParsingError = Class.new(RuntimeError)
+
     def initialize(output)
       @output = output
+      @env = Environment.new
     end
 
     def start
@@ -15,16 +19,25 @@ module Python
     end
 
     def read(code)
-      parser = Parser::ExpressionParser.new
-      parser.parse(code)
+      parser = Parser::StatementParser.statement
+      case result = parser.parse(code)
+      when Parser::Succeeded
+        result.parsed
+      when Parser::Failed
+        raise ParsingError.new
+      end
     end
 
     def eval(exp)
-      exp.eval
+      exp.eval(@env)
     end
 
     def print(obj)
-      @output.puts obj.entity.to_s
+      if obj == nil
+        @output.print ""
+      else
+        @output.puts obj.inspect
+      end
     end
 
     def prompt

@@ -1,31 +1,75 @@
 module Python
-  class PyObject
-    def initialize(meta_data)
-      @meta_data = meta_data
+  class PyObject < Hash
+    def initialize(attr={})
+      self.merge!(attr)
+    end
+
+    def make_instance(entity=nil, &entity_proc)
+      PyObject.new(:class => self, :entity => entity || entity_proc)
     end
 
     def entity
-      @meta_data[:entity]
+      self[:entity]
     end
 
-    def ==(other)
-      self.entity == other.entity
+    def call(*args)
+      self[:entity].call(*args)
     end
 
     def call_special_method(method_name, *args)
-      case method_name
-      when "__add__"
-        PyObject.new(:entity => self.entity + args[0].entity)
-      when "__sub__"
-        PyObject.new(:entity => self.entity - args[0].entity)
-      when "__mul__"
-        PyObject.new(:entity => self.entity * args[0].entity)
-      when "__floordiv__"
-        PyObject.new(:entity => self.entity / args[0].entity)
-      when "__pos__"
-        PyObject.new(:entity => + self.entity)
-      when "__neg__"
-        PyObject.new(:entity => - self.entity)
+      get_special_attr(method_name).call(*args)
+    end
+
+    def get_special_attr(name)
+      if !self[:class]
+        raise "failed to get special attr #{name} from #{self}: #{self} doesn't have class"
+      elsif cls = self[:class].cls_traverse{|cls| cls[name] && cls[name].datadescriptor?}
+        cls[name].get_get_method.call(cls[name], self, self[:class])
+      elsif cls = self[:class].cls_traverse{|cls| cls[name]}
+        if cls[name].descriptor?
+          cls[name].get_get_method.call(cls[name], self, self[:class])
+        else
+          cls[name]
+        end
+      else
+        raise "failed to get special attr #{name} from #{self}: #{name} is not found"
+      end
+    end
+
+    def get_get_method
+      cls = self[:class].cls_traverse{|cls| cls["__get__"]}
+      cls["__get__"]
+    end
+
+    def descriptor?
+      self[:class] && self[:class].cls_traverse{|cls| cls["__get__"]}
+    end
+
+    def datadescriptor?
+      descriptor? && self[:class].cls_traverse{|cls| cls["__get__"] || cls["__delete__"]}
+    end
+
+    def cls_traverse(&proc)
+      queue = [self]
+      until queue.empty?
+        cls = queue.pop
+        if judge = proc.call(cls)
+          return cls
+        end
+        queue += (cls[:bases] || [])
+      end
+      return nil
+    end
+
+    def inspect
+      if self[:name]
+        self[:name]
+      elsif self[:entity]
+        self[:entity].to_s
+      elsif self[:class] && self[:class][:name]
+        "<instance of:#{self[:class][:name]}"
+      else
+        super
       end
     end
   end
