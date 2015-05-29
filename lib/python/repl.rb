@@ -1,4 +1,5 @@
-require 'python/parser/expression'
+require 'python/parser/statement'
+require 'python/environment'
 
 module Python
   class REPL
@@ -6,6 +7,7 @@ module Python
 
     def initialize(output)
       @output = output
+      @env = Environment.new
     end
 
     def start
@@ -17,7 +19,7 @@ module Python
     end
 
     def read(code)
-      parser = Parser::ExpressionParser.expression
+      parser = Parser::StatementParser.statement
       case result = parser.parse(code)
       when Parser::Succeeded
         result.parsed
@@ -27,11 +29,15 @@ module Python
     end
 
     def eval(exp)
-      exp.eval
+      exp.eval(@env)
     end
 
     def print(obj)
-      @output.puts obj.entity.to_s
+      if obj == nil
+        @output.print ""
+      else
+        @output.puts obj.inspect
+      end
     end
 
     def prompt

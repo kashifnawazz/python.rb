@@ -10,6 +10,19 @@ class Out
   def print(message)
     messages << message
   end
+
+  def clear_messages
+    @messages = []
+  end
+end
+
+def global_repl
+  unless $repl
+    $out = Out.new
+    $repl = Python::REPL.new($out)
+    $repl.start
+  end
+  [$out, $repl]
 end
 
 # Feature: programmer starts REPL console
@@ -32,11 +45,8 @@ end
 #-----
 
 Given(/^I started repl but didn't input anything$/) do
-  unless @out
-    @out = Out.new
-    @repl = Python::REPL.new(@out)
-    @repl.start
-  end
+  @out, @repl = global_repl
+  @out.clear_messages
 end
 
 When(/^I input "([^"]*)"$/) do |input|
@@ -45,5 +55,10 @@ end
 
 Then(/^the output expect be "([^"]*)"$/) do |expected|
   @repl.read_eval_print(@input)
-  expect(@out.messages.drop(1)).to include(expected + "\n")
+  expect(@out.messages.length) == 1
+  if expected != ""
+    expect(@out.messages).to include(expected + "\n")
+  else
+    expect(@out.messages).to include("")
+  end
 end

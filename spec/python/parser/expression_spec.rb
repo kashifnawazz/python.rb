@@ -5,15 +5,15 @@ module Python
     describe ExpressionParser do
       describe "#parse" do
         def BOP(name, l, r)
-          Expression::BinaryOp.new(name, l, r)
+          Syntax::BinaryOp.new(name, l, r)
         end
 
         def UOP(name, e)
-          Expression::UnaryOp.new(name, e)
+          Syntax::UnaryOp.new(name, e)
         end
 
         def LO(n)
-          Expression::LiteralObject.new(Builtins::Int.make_instance(n))
+          Syntax::LiteralObject.new(Builtins::Int.make_instance(n))
         end
 
         it "parse numerical expression" do

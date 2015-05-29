@@ -63,9 +63,11 @@ module Python
 
     def inspect
       if self[:name]
-        "<class:#{self[:name]}>"
+        self[:name]
+      elsif self[:entity]
+        self[:entity].to_s
       elsif self[:class] && self[:class][:name]
-        "<instance:#{self[:class][:name]}"
+        "<instance of:#{self[:class][:name]}"
       else
         super
       end
