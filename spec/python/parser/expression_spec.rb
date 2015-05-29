@@ -13,7 +13,7 @@ module Python
         end
 
         def LO(n)
-          Expression::LiteralObject.new(PyObject.new(:entity => n))
+          Expression::LiteralObject.new(Builtins::Int.make_instance(n))
         end
 
         it "parse numerical expression" do

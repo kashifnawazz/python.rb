@@ -1,6 +1,7 @@
 require 'python/parser/combinator'
 require 'python/parser/integer'
 require 'python/expression'
+require 'python/builtins'
 
 module Python
   module Parser
@@ -37,7 +38,7 @@ module Python
       end
 
       parser :integerliteral do
-        IntegerParser.integer >> proc{|int| ret(E::LiteralObject.new(PyObject.new(:entity => int)))}
+        IntegerParser.integer >> proc{|n| ret(E::LiteralObject.new(Builtins::Int.make_instance(n)))}
       end
 
       parser :parenth_form do
