@@ -10,6 +10,8 @@ module Python
         Builtins::False
       when "None"
         Builtins::None
+      when "print"
+        Builtins::Print
       else
         self[name]
       end

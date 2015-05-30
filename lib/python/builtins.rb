@@ -21,6 +21,8 @@ module Python
     GTInt = Func.make_instance{|a, b| a.entity > b.entity ? True : False}
     IntToBool = Func.make_instance{|n| n.entity == 0 ? False : True}
 
+    Print = Func.make_instance{|o| puts(o.inspect)}
+
     Func["__get__"] = Func.make_instance{|_self, obj, objtype| Func.make_instance{|*args| _self.call(obj, *args)}}
     Int["__add__"] = Func.make_instance{|_self, other| AddTwoInt.call(_self, other)}
     Int["__sub__"] = Func.make_instance{|_self, other| SubTwoInt.call(_self, other)}

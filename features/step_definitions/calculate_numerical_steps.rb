@@ -3,6 +3,10 @@ class Out
     @messages ||= []
   end
 
+  def write(messge)
+    print(message)
+  end
+
   def puts(message)
     print(message + "\n")
   end
@@ -38,14 +42,27 @@ Given(/^I started repl but didn't input anything$/) do
 end
 
 When(/^I input "([^"]*)"$/) do |input|
-  @input = input
+  @repl.read_eval_print(input)
 end
 
 Then(/^the output expect be "([^"]*)"$/) do |expected|
-  @repl.read_eval_print(@input)
   if expected != ""
     expect(@out.messages.last).to eq(expected + "\n")
   else
     expect(@out.messages.last).to eq("")
   end
+end
+
+# Feature: programmer execute python program in source file
+#-----
+
+Given(/^in silence, I am on shell$/) do
+
+end
+
+When(/^I start interpreter with argument "([^"]*)":$/) do |filename, code|
+  @interpreter = Python::FileInterpreter.new(code)
+  original_stdout, $stdout = $stdout, Out.new
+  @interpreter.execute
+  $stdout, @out = original_stdout, $stdout
 end

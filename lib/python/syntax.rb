@@ -37,6 +37,10 @@ module Python
     # AST-elements of Expressions
     #--------------------
 
+    Apply = exp(:callee_exp, :arg_exps) do |env|
+      @callee_exp.eval(env).call(*@arg_exps.map{|e| e.eval(env)})
+    end
+
     RefIdentifier = exp(:name) do |env|
       if res = env.resolve(@name)
         res
