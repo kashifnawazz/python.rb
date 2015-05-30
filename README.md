@@ -1,6 +1,6 @@
 # Python
 
-Python implemented purely in Ruby without any library.
+Python implemented purely in Ruby without any libraries.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Usage
 
-Executable script "python.rb" is installed in your bin path.
+Executable script "python.rb" will be installed in your bin path.
 You can execute python program by two way.
 One way is through command-line interpreter (REPL), and another is from source-file.
 
@@ -39,7 +39,7 @@ One way is through command-line interpreter (REPL), and another is from source-f
 
 ## Contributing
 
-1. Fork it ( https://github.com/sawaken/python/fork )
+1. Fork it ( https://github.com/sawaken/python.rb/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
