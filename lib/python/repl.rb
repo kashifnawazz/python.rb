@@ -19,7 +19,7 @@ module Python
     end
 
     def read(code)
-      parser = Parser::StatementParser.statement
+      parser = Parser::StatementParser.stmt_list
       result = parser.parse(code)
       if result.is_a?(Parser::Succeeded) && result.rest.chomp == ""
         result.parsed

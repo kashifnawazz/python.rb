@@ -61,8 +61,7 @@ Given(/^in silence, I am on shell$/) do
 end
 
 When(/^I start interpreter with argument "([^"]*)":$/) do |filename, code|
-  @interpreter = Python::FileInterpreter.new(code)
-  original_stdout, $stdout = $stdout, Out.new
-  @interpreter.execute
-  $stdout, @out = original_stdout, $stdout
+  @out = Out.new
+  printfunc = Python::Builtins::Func.make_instance{|obj| @out.puts(obj.inspect)}
+  Python::FileInterpreter.new(code, "print" => printfunc).execute
 end

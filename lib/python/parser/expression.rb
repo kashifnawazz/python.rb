@@ -90,10 +90,7 @@ module Python
       end
 
       parser :positional_arguments do # -> [Expression]
-        expression >> proc{|exp|
-          many(token_str(",") + expression) >> proc{|exps|
-            ret([exp] + exps)
-          }} | ret([])
+        separator_allow_empty(expression, ",")
       end
 
       parser :atom do

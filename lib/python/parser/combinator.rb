@@ -88,6 +88,17 @@ module Python
           }}
       end
 
+      def self.separator(element_parser, separating_token_str)
+        element_parser >> proc{|x|
+          many(token_str(separating_token_str) + element_parser) >> proc{|xs|
+            ret([x] + xs)
+          }}
+      end
+
+      def self.separator_allow_empty(element_parser, separating_token_str)
+        separator(element_parser, separating_token_str) | ret([])
+      end
+
       def self.optional(parser)
         (parser >> proc{|x| ret([x])}) | ret([])
       end
@@ -132,22 +143,6 @@ module Python
         else
           raise ParserDefinitionError.new
         end
-      end
-
-      def self.not_any_char(x)
-        case x
-        when String
-          cs = x.chars
-        when Range
-          cs = x.to_a
-        when Array
-          cs = x
-        else
-          raise ParserDefinitionError.new
-        end
-        item >> proc{|c|
-          if cs.include?(c) then failure else ret(c) end
-        }
       end
 
       def self.string(str)

@@ -6,13 +6,14 @@ module Python
   class FileInterpreter
     ParsingError = Class.new(RuntimeError)
 
-    def initialize(code)
+    def initialize(code, bind={})
       @code = code
+      @bind = bind
     end
 
     def parse
       parser = Parser::StatementParser.file_input
-      result = parser.parse(IndentConverter.new.convert(@code))
+      result = parser.parse(Parser::IndentConverter.new.convert(@code))
       if result.is_a?(Parser::Succeeded) && result.rest == ""
         result.parsed
       else
@@ -21,11 +22,7 @@ module Python
     end
 
     def execute
-      stmts = parse()
-      env = Environment.new
-      stmts.each do |stmt|
-        stmt.eval(env)
-      end
+      parse().eval(Environment.new(@bind))
     end
   end
 end
