@@ -21,7 +21,30 @@ module Python
     GTInt = Func.make_instance{|a, b| a.entity > b.entity ? True : False}
     IntToBool = Func.make_instance{|n| n.entity == 0 ? False : True}
 
+    Print = Func.make_instance{|o| puts(o.inspect)}
+    ClosureCall = Func.make_instance do |f, *args|
+      if f.entity[:rest_param_name]
+        unless f.entity[:fix_param_names].length <= args.length
+          raise Syntax::PyCallError.new
+        end
+      else
+        unless f.entity[:fix_param_names].length == args.length
+          raise Syntax::PyCallError.new
+        end
+      end
+      bind = f.entity[:fix_param_names].zip(args).to_h
+      env = Environment.new(bind.merge(:parent => f.entity[:env]))
+      begin
+        f.entity[:stat].eval(env)
+      rescue Syntax::PyReturnException => e
+        e.obj
+      else
+        None
+      end
+    end
+
     Func["__get__"] = Func.make_instance{|_self, obj, objtype| Func.make_instance{|*args| _self.call(obj, *args)}}
+    Func["__call__"] = Func.make_instance{|_self, *args| ClosureCall.call(_self, *args)}
     Int["__add__"] = Func.make_instance{|_self, other| AddTwoInt.call(_self, other)}
     Int["__sub__"] = Func.make_instance{|_self, other| SubTwoInt.call(_self, other)}
     Int["__mul__"] = Func.make_instance{|_self, other| MulTwoInt.call(_self, other)}

@@ -12,6 +12,8 @@ module Python
     # Exceptions possibly occurring when evaluating
     PyBoolizeError = py_runtime_error()
     PyNameError = py_runtime_error()
+    PyReturnException = py_runtime_error(:obj)
+    PyCallError = py_runtime_error()
 
     def self.pytrue?(object)
       boolized = object.call_special_method("__bool__")
@@ -28,14 +30,38 @@ module Python
     # AST-elements of Statements
     #--------------------
 
+    StatementList = stmt(:stmts) do |env|
+      @stmts.inject(nil) do |acc, stmt|
+        stmt.eval(env)
+      end
+    end
+
     AssignIdentifier = stmt(:name, :exp) do |env|
       env.set(@name, @exp.eval(env))
       nil
     end
 
+    Def = stmt(:name, :stat, :fix_param_names, [:rest_param_name]) do |env|
+      entity = {:fix_param_names => @fix_param_names,
+                :rest_param_name => @rest_param_name,
+                :stat => @stat,
+                :env => env}
+      env.set(@name, Builtins::Func.make_instance(entity))
+      nil
+    end
+
+    Return = stmt([:exp]) do |env|
+      res = if @exp then @exp.eval(env) else Builtins::None end
+      raise PyReturnException.new(res)
+    end
+
     #--------------------
     # AST-elements of Expressions
     #--------------------
+
+    Apply = exp(:callee_exp, :arg_exps) do |env|
+      @callee_exp.eval(env).call(*@arg_exps.map{|e| e.eval(env)})
+    end
 
     RefIdentifier = exp(:name) do |env|
       if res = env.resolve(@name)

@@ -13,7 +13,11 @@ module Python
     end
 
     def call(*args)
-      self[:entity].call(*args)
+      if self[:entity] && self[:entity].is_a?(Proc)
+        self[:entity].call(*args)
+      else
+        call_special_method("__call__", *args)
+      end
     end
 
     def call_special_method(method_name, *args)

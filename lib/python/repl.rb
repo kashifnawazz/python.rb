@@ -19,11 +19,11 @@ module Python
     end
 
     def read(code)
-      parser = Parser::StatementParser.statement
-      case result = parser.parse(code)
-      when Parser::Succeeded
+      parser = Parser::StatementParser.stmt_list
+      result = parser.parse(code)
+      if result.is_a?(Parser::Succeeded) && result.rest.chomp == ""
         result.parsed
-      when Parser::Failed
+      else
         raise ParsingError.new
       end
     end

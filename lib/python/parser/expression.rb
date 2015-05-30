@@ -79,7 +79,18 @@ module Python
         (posop | negop) >> proc{|op_name|
           u_expr >> proc{|exp|
             ret(Syntax::UnaryOp.new(op_name, exp))
-          }} | atom
+          }} | call
+      end
+
+      parser :call do # -> Apply
+        atom >> proc{|callee|
+          many(token_str("(") + positional_arguments - token_str(")")) >> proc{|applies|
+            ret(applies.inject(callee){|c, a| Syntax::Apply.new(c, a)})
+          }}
+      end
+
+      parser :positional_arguments do # -> [Expression]
+        separator_allow_empty(expression, ",")
       end
 
       parser :atom do
