@@ -1,19 +1,12 @@
-Feature: programmer calculate numerical expression
+Feature: programmer use advanced calculator
 
-  The programmer calculates numerical expressions with variables and conditions through REPL console.
+  The programmer calculates numerical expressions with conditions through REPL console.
   REPL console print caluculated number in one line.
 
-  Scenario Outline: calculate numerical expression with variables and conditions
+  Scenario Outline: calculate numerical expression with conditions
     Given I started repl but didn't input anything
     When I input "<statement>"
     Then the output expect be "<evaluated>"
-
-    Scenarios: with variables
-      | statement | evaluated |
-      |     x = 1 |           |
-      |         x |         1 |
-      | x = x + 1 |           |
-      |         x |         2 |
 
     Scenarios: with conditional operator
       | statement | evaluated |
