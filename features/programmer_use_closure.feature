@@ -38,3 +38,29 @@ Feature: programmer use closure
         print(twice(double, 5))
         """
       Then the output expect be "20"
+
+    Scenario: argument-less function
+      Given in silence, I am on shell
+      When I start interpreter with argument "noargs.py":
+        """
+        def hello():
+          print(12)
+
+        hello()
+        """
+      Then the output expect be "12"
+
+    Scenario: double DEDENT
+      Given in silence, I am on shell
+      When I start interpreter with argument "doublededent.py":
+        """
+        def foo():
+          def bar():
+            return 1
+          def baz():
+            return 2
+
+        a = foo()
+        print(0)
+        """
+      Then the output expect be "0"

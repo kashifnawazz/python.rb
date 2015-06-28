@@ -28,5 +28,15 @@ module Python
     def set(name, pyobj)
       self[name] = pyobj
     end
+
+    def getlink
+      self
+    end
+  end
+
+  class ClassEnvironment < Environment
+    def getlink
+      self[:parent].getlink
+    end
   end
 end

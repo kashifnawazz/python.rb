@@ -27,14 +27,22 @@ module Python
       end
 
       parser :compound_stmt do # -> Statement
-        funcdef
+        classdef | funcdef
       end
 
       parser :funcdef do # -> Statement
         token_str("def") + IdentifierParser.identifier - token_str("(") >> proc{|funcname|
-          separator(IdentifierParser.identifier, ",") - token_str(")") - token_str(":") >> proc{|params|
+          separator_allow_empty(IdentifierParser.identifier, ",") - token_str(")") - token_str(":") >> proc{|params|
             suite >> proc{|stmt|
               ret(Syntax::Def.new(funcname, stmt, params))
+            }}}
+      end
+
+      parser :classdef do # -> Statement
+        token_str("class") + IdentifierParser.identifier >> proc{|classname|
+          ((token_str("(") + separator(ExpressionParser.expression, ",") - token_str(")")) | ret([])) - token_str(":") >> proc{|base_exps|
+            suite >> proc{|stmt|
+              ret(Syntax::ClassDef.new(classname, stmt, base_exps))
             }}}
       end
 
@@ -49,9 +57,17 @@ module Python
       end
 
       parser :assignment_stmt do # -> Statement
-        IdentifierParser.identifier - token_str("=") >> proc{|ident|
+        ((IdentifierParser.identifier - token_str("=")) | (ExpressionParser::primary - token_str("="))) >> proc{|target|
           ExpressionParser.expression >> proc{|exp|
-            ret(Syntax::AssignIdentifier.new(ident, exp))
+            case target
+            when String
+              ret(Syntax::AssignIdentifier.new(target, exp))
+            when Syntax::AttrRef
+              ret(Syntax::AssignAttr.new(target.receiver, target.attrname, exp))
+            else
+              p target
+              failure
+            end
           }}
       end
 

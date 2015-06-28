@@ -14,6 +14,7 @@ module Python
     def parse
       parser = Parser::StatementParser.file_input
       result = parser.parse(Parser::IndentConverter.new.convert(@code))
+
       if result.is_a?(Parser::Succeeded) && result.rest == ""
         result.parsed
       else

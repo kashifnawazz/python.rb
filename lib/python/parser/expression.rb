@@ -79,14 +79,26 @@ module Python
         (posop | negop) >> proc{|op_name|
           u_expr >> proc{|exp|
             ret(Syntax::UnaryOp.new(op_name, exp))
-          }} | call
+          }} | primary
+      end
+
+      parser :primary do
+        atom >> proc{|at|
+          many(attributeref | call) >> proc{|ps|
+            ret(ps.inject(at){|a, p| p.call(a)})
+          }}
+      end
+
+      parser :attributeref do
+        token_str(".") + IdentifierParser.identifier >> proc{|ident|
+          ret(proc{|receiver| Syntax::AttrRef.new(receiver, ident)})
+        }
       end
 
       parser :call do # -> Apply
-        atom >> proc{|callee|
-          many(token_str("(") + positional_arguments - token_str(")")) >> proc{|applies|
-            ret(applies.inject(callee){|c, a| Syntax::Apply.new(c, a)})
-          }}
+        token_str("(") + positional_arguments - token_str(")") >> proc{|args|
+            ret(proc{|callee| Syntax::Apply.new(callee, args)})
+        }
       end
 
       parser :positional_arguments do # -> [Expression]

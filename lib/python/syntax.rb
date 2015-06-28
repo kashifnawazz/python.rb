@@ -1,19 +1,80 @@
 require 'python/pyobject'
-require 'python/syntax_util'
 require 'python/builtins'
 
 module Python
   module Syntax
-    extend SyntaxUtil
+    class Statement
+      def attrs
+        []
+      end
 
-    Statement = Class.new
+      def eval_proc
+        proc{}
+      end
+
+      def initialize(*args)
+        min_argc = attrs.take_while{|attr| attr.is_a?(Symbol)}.count
+        max_argc = attrs.flatten.count
+        unless min_argc <= args.length && args.length <= max_argc
+          raise "Argument error: failed to make instance of #{self.class.name}." +
+                "expected: #{attrs}, actual: #{args}"
+        end
+        attrs.flatten.zip(args).each do |name, val|
+          instance_variable_set("@#{name}".to_sym, val)
+        end
+      end
+
+      def eval(env)
+        instance_exec(env, &eval_proc)
+      end
+
+      def ==(other)
+        self.class == other.class && attrs.flatten.all? do |vname|
+          ivname = "@#{vname}".to_sym
+          self.instance_variable_get(ivname) == other.instance_variable_get(ivname)
+        end
+      end
+    end
     Expression = Class.new(Statement)
 
+    def self.stmt(*attrs, &eval)
+      define_element_type(Statement, *attrs, &eval)
+    end
+
+    def self.exp(*attrs, &eval)
+      define_element_type(Expression, *attrs, &eval)
+    end
+
+    def self.define_element_type(base, *attrs, &eval_proc)
+      cls = Class.new(base)
+      cls.send(:define_method, :attrs) { attrs }
+      cls.send(:define_method, :eval_proc) { eval_proc }
+      cls.send(:attr_reader, *attrs.flatten)
+      return cls
+    end
+
+    def self.draw_syntax_tree(val, depth=0)
+      case val
+      when  Statement
+        puts ("  " * depth) + "Node<#{val.class.name}>:"
+        val.attrs.flatten.each do |attrname|
+          puts ("  " * (depth + 1)) + "#{attrname}:"
+          draw_syntax_tree(val.instance_variable_get("@#{attrname}".to_sym), depth + 2)
+        end
+      when Array
+        val.each_with_index do |v, i|
+          puts ("  " * (depth + 1)) + "[#{i}]"
+          draw_syntax_tree(v, depth + 2)
+        end
+      else
+        puts ("  " * (depth + 1)) + val.to_s
+      end
+    end
+
     # Exceptions possibly occurring when evaluating
-    PyBoolizeError = py_runtime_error()
-    PyNameError = py_runtime_error()
-    PyReturnException = py_runtime_error(:obj)
-    PyCallError = py_runtime_error()
+    PyBoolizeError = Class.new(RuntimeError)
+    PyNameError = Class.new(RuntimeError)
+    PyCallError = Class.new(RuntimeError)
 
     def self.pytrue?(object)
       boolized = object.call_special_method("__bool__")
@@ -41,18 +102,32 @@ module Python
       nil
     end
 
+    AssignAttr = stmt(:receiver, :attrname, :exp) do |env|
+      @receiver.eval(env).set_attr(@attrname, @exp.eval(env))
+      nil
+    end
+
     Def = stmt(:name, :stat, :fix_param_names, [:rest_param_name]) do |env|
       entity = {:fix_param_names => @fix_param_names,
                 :rest_param_name => @rest_param_name,
                 :stat => @stat,
-                :env => env}
+                :env => env.getlink}
       env.set(@name, Builtins::Func.make_instance(entity))
+      nil
+    end
+
+    ClassDef = stmt(:name, :stat, :base_exps) do |env|
+      bases = @base_exps.map{|e| e.eval(env)}
+      klassenv = ClassEnvironment.new(:parent => env)
+      stat.eval(klassenv)
+      klass = PyObject.new(klassenv.merge(:class => Builtins::Type, :bases => bases))
+      env.set(@name, klass)
       nil
     end
 
     Return = stmt([:exp]) do |env|
       res = if @exp then @exp.eval(env) else Builtins::None end
-      raise PyReturnException.new(res)
+      throw :return, res
     end
 
     #--------------------
@@ -63,11 +138,15 @@ module Python
       @callee_exp.eval(env).call(*@arg_exps.map{|e| e.eval(env)})
     end
 
+    AttrRef = exp(:receiver, :attrname) do |env|
+      @receiver.eval(env).get_attr(@attrname)
+    end
+
     RefIdentifier = exp(:name) do |env|
       if res = env.resolve(@name)
         res
       else
-        raise PyNameError.new
+        raise PyNameError.new("Unbound variable: #{@name}")
       end
     end
 

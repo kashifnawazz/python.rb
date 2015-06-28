@@ -27,9 +27,9 @@ module Python
     def get_special_attr(name)
       if !self[:class]
         raise "failed to get special attr #{name} from #{self}: #{self} doesn't have class"
-      elsif cls = self[:class].cls_traverse{|cls| cls[name] && cls[name].datadescriptor?}
+      elsif cls = self[:class].base_traverse{|cls| cls[name] && cls[name].datadescriptor?}
         cls[name].get_get_method.call(cls[name], self, self[:class])
-      elsif cls = self[:class].cls_traverse{|cls| cls[name]}
+      elsif cls = self[:class].base_traverse{|cls| cls[name]}
         if cls[name].descriptor?
           cls[name].get_get_method.call(cls[name], self, self[:class])
         else
@@ -40,20 +40,69 @@ module Python
       end
     end
 
+    def has_special_attr?(name)
+      get_special_attr(name)
+    rescue
+      nil
+    end
+
+    def get_attr(name)
+      if !self[:class]
+        raise "failed to get attr #{name} from #{self}: #{self} doesn't have class"
+      elsif cls = self[:class].base_traverse{|cls| cls[name] && cls[name].datadescriptor?}
+        cls[name].get_get_method.call(cls[name], self, self[:class])
+      elsif owner = self.base_traverse{|owner| owner[name]}
+        owner[name]
+      elsif cls = self[:class].base_traverse{|cls| cls[name]}
+        if cls[name].descriptor?
+          cls[name].get_get_method.call(cls[name], self, self[:class])
+        else
+          cls[name]
+        end
+      else
+        raise "failed to get attr #{name} from #{self}: #{name} is not found"
+      end
+    end
+
+    def has_attr?(name)
+      get_attr(name)
+    rescue
+      nil
+    end
+
+    def set_attr(name, pyobj)
+      if !self[:class]
+        raise "failed to set attr #{name} on #{self}: #{self} doesn't have class"
+      elsif cls = self[:class].base_traverse{|cls| cls[name] && cls[name].datadescriptor?}
+        cls[name].get_set_method.call(cls[name], self, pyobj)
+      else
+        self[name] = pyobj
+      end
+    end
+
     def get_get_method
-      cls = self[:class].cls_traverse{|cls| cls["__get__"]}
+      cls = self[:class].base_traverse{|cls| cls["__get__"]}
       cls["__get__"]
     end
 
     def descriptor?
-      self[:class] && self[:class].cls_traverse{|cls| cls["__get__"]}
+      self[:class] && self[:class].base_traverse{|cls| cls["__get__"]}
+    end
+
+    def get_set_method
+      cls = self[:class].base_traverse{|cls| cls["__set__"] || cls["__delete__"]}
+      unless cls["__set__"]
+        raise "cannot set data on datadescriptor '#{cls}'"
+      else
+        cls["__set__"]
+      end
     end
 
     def datadescriptor?
-      descriptor? && self[:class].cls_traverse{|cls| cls["__get__"] || cls["__delete__"]}
+      descriptor? && self[:class].base_traverse{|cls| cls["__set__"] || cls["__delete__"]}
     end
 
-    def cls_traverse(&proc)
+    def base_traverse(&proc)
       queue = [self]
       until queue.empty?
         cls = queue.pop
