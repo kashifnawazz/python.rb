@@ -26,6 +26,7 @@ return 123
 $D$Dreturn ccc
 $D
 aaa()
+
 CODE
           expect(IndentConverter.new.convert(input_code)).to eq(expected_code)
         end

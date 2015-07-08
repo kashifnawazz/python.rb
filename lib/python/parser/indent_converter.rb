@@ -10,7 +10,8 @@ module Python
       def convert(str)
         stack = [0]
         converted_lines = []
-        str.gsub("\r\n", "\n").gsub("\r", "\n").split("\n").each do |line|
+        lines = str.gsub("\r\n", "\n").gsub("\r", "\n").split("\n") + [""]
+        lines.each do |line|
           ilevel = indent_level(line)
           if ilevel > stack.last
             stack << ilevel

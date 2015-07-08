@@ -17,7 +17,7 @@ module Python
       end
 
       parser :suite do # -> StatementList
-        stmt_list - NEWLINE | NEWLINE + INDENT + many1(statement) - DEDENT >> proc{|stmts|
+        stmt_list - NEWLINE | NEWLINE + INDENT + many1(statement) - many(NEWLINE) - DEDENT >> proc{|stmts|
           ret(Syntax::StatementList.new(stmts))
         }
       end

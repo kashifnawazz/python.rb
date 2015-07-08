@@ -1,6 +1,6 @@
 # Python
 
-Python implemented purely in Ruby without any libraries.
+Python implemented in pure Ruby without any libraries.
 
 ## Installation
 
@@ -33,8 +33,22 @@ One way is through command-line interpreter (REPL), and another is from source-f
 
 ### Executing program from source file
 
-    $ python.rb hello.py
-    hello, world!!
+```python
+# demo.py
+class A:
+    def __init__(self, x):
+        self.x = x
+
+    def add(self, d):
+        self.x = self.x + d
+        return self
+
+a = A(1).add(2).add(3)
+print(a.x)
+```
+
+    $ python.rb demo.py
+    6
     $
 
 ## Contributing
